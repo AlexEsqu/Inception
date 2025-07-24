@@ -1,0 +1,14 @@
+# docker build -t my-nginx-app .
+# docker run -p 8080:80 my-nginx-app
+
+volumes:
+  WordPress:
+  MariaDB:
+  devvm_data:
+
+services:
+  nginx:
+    image:
+    build:
+
+
