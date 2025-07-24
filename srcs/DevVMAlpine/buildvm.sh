@@ -6,15 +6,10 @@ docker build -t devvm ./DevVM
 
 if [ $? -eq 0 ]; then
     echo "Build successful!"
+    echo ""
     echo "To run the container, use:"
     echo "docker run -d -p 4243:4242 --name devvm devvm"
-    echo "To connect via SSH:"
-    echo "ssh devuser@localhost -p 4243"
-    echo "Password: devpass"
-    echo "To stop the container:"
-    echo "docker stop devvm"
-    echo "To remove the container:"
-    echo "docker rm devvm"
+    echo "or ./DevVM/runvm.sh"
 else
     echo "Build failed!"
     exit 1
