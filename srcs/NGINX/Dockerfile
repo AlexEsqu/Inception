@@ -10,7 +10,6 @@ RUN apk add openssl curl ca-certificates \
 	&& curl -o /tmp/nginx_signing.rsa.pub https://nginx.org/keys/nginx_signing.rsa.pub \
 	&& openssl rsa -pubin -in /tmp/nginx_signing.rsa.pub -text -noout \
 	&& mv /tmp/nginx_signing.rsa.pub /etc/apk/keys/ \
-	# Actually installing nginx
 	&& apk add nginx@nginx
 
 EXPOSE 80

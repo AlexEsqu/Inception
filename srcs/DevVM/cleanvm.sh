@@ -1,10 +1,12 @@
 #!/bin/bash
 
-echo "Cleaning up DevVM containers and images...\n"
+echo ""
+echo "-- Cleaning up DevVM containers and images --"
+echo ""
 
-# Stop and remove containers with 'devvm' in the name
+# Stop and remove containers with 'devvm_image' in the name
 echo "Stopping and removing DevVM containers..."
-CONTAINERS=$(docker ps -aq --filter "name=devvm" --filter "name=development_vm")
+CONTAINERS=$(docker ps -aq --filter "name=devvm_image" --filter "name=alex_vm")
 if [ ! -z "$CONTAINERS" ]; then
     echo "Found containers: $CONTAINERS"
     docker stop $CONTAINERS 2>/dev/null
@@ -13,12 +15,11 @@ if [ ! -z "$CONTAINERS" ]; then
 else
     echo "No DevVM containers found"
 fi
-
 echo ""
 
-# Remove images with 'devvm' in the name or tag
+# Remove images with 'devvm_image' in the name or tag
 echo "Removing DevVM images..."
-IMAGES=$(docker images --filter "reference=*devvm*" -q)
+IMAGES=$(docker images --filter "reference=*devvm_image*" -q)
 if [ ! -z "$IMAGES" ]; then
     echo "Found images: $IMAGES"
     docker rmi -f $IMAGES 2>/dev/null
@@ -26,7 +27,6 @@ if [ ! -z "$IMAGES" ]; then
 else
     echo "No DevVM images found"
 fi
-
 echo ""
 
 # Remove any dangling images
@@ -38,27 +38,25 @@ if [ ! -z "$DANGLING" ]; then
 else
     echo "No dangling images found"
 fi
-
 echo ""
 
-# Remove DevVM volumes (optional)
-echo "Checking for DevVM volumes..."
-VOLUMES=$(docker volume ls --filter "name=devvm" -q)
-if [ ! -z "$VOLUMES" ]; then
-    echo "Found volumes: $VOLUMES"
-    read -p "Do you want to remove DevVM volumes? This will delete all data! (y/N): " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker volume rm $VOLUMES 2>/dev/null
-        echo "Volumes removed"
-    else
-        echo "Volumes kept"
-    fi
-else
-    echo "No DevVM volumes found"
-fi
-
-echo ""
+# # Remove DevVM volumes (optional)
+# echo "Checking for DevVM volumes..."
+# VOLUMES=$(docker volume ls --filter "name=devvm_image" -q)
+# if [ ! -z "$VOLUMES" ]; then
+#     echo "Found volumes: $VOLUMES"
+#     read -p "Do you want to remove DevVM volumes? This will delete all data! (y/N): " -n 1 -r
+#     echo ""
+#     if [[ $REPLY =~ ^[Yy]$ ]]; then
+#         docker volume rm $VOLUMES 2>/dev/null
+#         echo "Volumes removed"
+#     else
+#         echo "Volumes kept"
+#     fi
+# else
+#     echo "No DevVM volumes found"
+# fi
+# echo ""
 
 # Clean up SSH known hosts entry
 echo "Cleaning up SSH known hosts..."
@@ -71,7 +69,3 @@ fi
 
 echo ""
 echo "DevVM cleanup complete!"
-echo ""
-echo "To rebuild DevVM:"
-echo "  ./build_devvm.sh"
-echo "  ./runvm.sh"

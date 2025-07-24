@@ -1,71 +1,78 @@
-FROM ubuntu:22.04
+FROM alpine:latest
 
-# Prevent interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Update and install packages including VS Code dependencies
-RUN apt-get update && apt-get install -y \
-    openssh-server \
+# Update package list and install required packages
+RUN apk update && apk add --no-cache \
+    openssh \
     git \
     vim \
     bash \
     sudo \
+    shadow \
+    xauth \
+    xorg-server \
     curl \
     wget \
-    ca-certificates \
-    xauth \
-    x11-apps \
-    software-properties-common \
-    apt-transport-https \
-    gpg \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
-    libgbm1 \
-    libnss3 \
-    libxss1 \
-    libdrm2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    && rm -rf /var/lib/apt/lists/*
+    gcompat \
+    libstdc++ \
+    tree \
+    ca-certificates
 
-# Create user
-RUN useradd -m -s /bin/bash devuser && \
-    echo "devuser:devpass" | chpasswd && \
-    usermod -aG sudo devuser && \
-    echo "devuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+# Create root and set paswords
+RUN --mount=type=secret,id=root_password \
+    ROOT_PASSWORD=$(cat /run/secrets/root_password) && \
+    echo "root:$ROOT_PASSWORD" | chpasswd
+
+# Create user and set passwords and sudo using secrets
+RUN --mount=type=secret,id=devuser_password \
+    --mount=type=secret,id=devuser_name \
+    DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
+    DEVUSER_PASSWORD=$(cat /run/secrets/devuser_password) && \
+    adduser -D -s /bin/bash $DEVUSER_NAME && \
+    echo "$DEVUSER_NAME:$DEVUSER_PASSWORD" | chpasswd && \
+    echo "$DEVUSER_NAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Install VS Code
-RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg && \
-    install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/ && \
-    echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list && \
-    apt-get update && \
-    apt-get install -y code && \
-    rm -rf /var/lib/apt/lists/*
+RUN wget -O vscode.tar.gz "https://update.code.visualstudio.com/latest/linux-x64/stable" && \
+    mkdir -p /opt/vscode && \
+    tar -xzf vscode.tar.gz -C /opt/vscode --strip-components=1 && \
+    rm vscode.tar.gz && \
+    ln -s /opt/vscode/bin/code /usr/local/bin/code && \
+    chmod +x /opt/vscode/bin/code
 
-# Configure SSH with X11 settings
-RUN mkdir /var/run/sshd && \
-    sed -i 's/#Port 22/Port 4242/' /etc/ssh/sshd_config && \
+# Generate SSH host keys (CRITICAL - this was missing!)
+RUN ssh-keygen -A
+
+# Configure SSH daemon
+RUN sed -i 's/#Port 22/Port 4242/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
     sed -i 's/#X11Forwarding no/X11Forwarding yes/' /etc/ssh/sshd_config && \
     sed -i 's/#X11DisplayOffset 10/X11DisplayOffset 10/' /etc/ssh/sshd_config && \
-    sed -i 's/#X11UseLocalhost yes/X11UseLocalhost no/' /etc/ssh/sshd_config && \
-    echo "X11UseLocalhost no" >> /etc/ssh/sshd_config
+    sed -i 's/#X11UseLocalhost yes/X11UseLocalhost no/' /etc/ssh/sshd_config
 
-# Setup user environment
-RUN mkdir -p /home/devuser/.ssh /home/devuser/workspace && \
-    chown -R devuser:devuser /home/devuser && \
-    chmod 700 /home/devuser/.ssh
+# Create directories and set permissions
+RUN --mount=type=secret,id=devuser_name \
+    DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
+    mkdir -p /home/$DEVUSER_NAME/workspace \
+             /home/$DEVUSER_NAME/.vscode-server \
+             /home/$DEVUSER_NAME/.ssh \
+             /etc/ssh/keys && \
+    chown -R $DEVUSER_NAME:$DEVUSER_NAME /home/$DEVUSER_NAME && \
+    chmod 700 /home/$DEVUSER_NAME/.ssh
 
-# Vim config
-RUN echo 'set number\nset autoindent\nset tabstop=4\nset shiftwidth=4\nset expandtab' > /home/devuser/.vimrc && \
-    chown devuser:devuser /home/devuser/.vimrc
-
-# Startup script
-RUN echo '#!/bin/bash\necho "Development VM Ready!"\necho "SSH: ssh -X devuser@localhost -p 4243"\necho "Password: devpass"\necho "VS Code: code"\n/usr/sbin/sshd -D' > /start.sh && \
+# Create startup script
+RUN --mount=type=secret,id=devuser_name \
+    DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
+    echo '#!/bin/bash' > /start.sh && \
+    # echo 'mkdir -p /tmp/.X11-unix' >> /start.sh && \
+    # echo 'chmod 1777 /tmp/.X11-unix' >> /start.sh && \
+    # echo 'mkdir -p /var/run/sshd' >> /start.sh && \
+    echo '/usr/sbin/sshd -D' >> /start.sh && \
     chmod +x /start.sh
 
+# Expose SSH port
 EXPOSE 4242
+
+# Start SSH daemon
 CMD ["/start.sh"]
