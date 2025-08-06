@@ -18,17 +18,8 @@ services:
     environment:
       - DISPLAY
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
       - devvm_workspace:/home/devuser/workspace
     restart: unless-stopped
-    stdin_open: true
-    tty: true
-    security_opt:
-      - seccomp:unconfined
-    cap_add:
-      - SYS_PTRACE
-    network_mode: bridge
 
 secrets:
   devuser_name:
