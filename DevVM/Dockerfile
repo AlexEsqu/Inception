@@ -82,7 +82,8 @@ RUN printf '%s\n' \
     "" \
     "~~ Welcome to my super dev VM ! ~~" \
     "" \
-    "Firefox: " \
+    "I'm trying to keep it tidy in here so I prepared lighter versions:" \
+    "Firefox: firefox-esr" \
     "VS Code: code --no-sandbox" \
     > /etc/motd
 
