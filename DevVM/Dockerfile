@@ -67,28 +67,6 @@ RUN sed -i 's/#Port 22/Port 4242/' /etc/ssh/sshd_config && \
     sed -i 's/#AddressFamily any/AddressFamily inet/' /etc/ssh/sshd_config && \
     sed -i 's/AllowTcpForwarding no/AllowTcpForwarding yes/' /etc/ssh/sshd_config
 
-RUN printf '%s\n' \
-    "" \
-    "" \
-    " _ .-') _     ('-.        (\`-.               (\`-.   _   .-')" \
-    "( (  OO) )  _(  OO)     _(OO  )_           _(OO  )_( '.( OO )_" \
-    " \     .'_ (,------.,--(_/   ,. \      ,--(_/   ,. \,--.   ,--." \
-    " ,\`'--..._) |  .---'\   \   /(__/      \   \   /(__/|   \`.'   |" \
-    " |  |  \  ' |  |     \   \ /   /        \   \ /   / |         |" \
-    " |  |   ' |(|  '--.   \   '   /,         \   '   /, |  |'.'|  |" \
-    " |  |   / : |  .--'    \     /__)         \     /__)|  |   |  |" \
-    " |  '--'  / |  \`---.    \   /              \   /    |  |   |  |" \
-    " \`-------'  \`------'     \`-'                \`-'     \`--'   \`--'" \
-    "" \
-    "~~ Welcome to my super dev VM ! ~~" \
-    "" \
-    "I'm trying to keep it tidy in here so I prepared lighter versions:" \
-    "Firefox: firefox-esr" \
-    "VS Code: code --no-sandbox" \
-    "" \
-    "" \
-    > /etc/motd
-
 # Create directories and set permissions
 RUN --mount=type=secret,id=devuser_name \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
@@ -100,15 +78,15 @@ RUN --mount=type=secret,id=devuser_name \
     touch /home/$DEVUSER_NAME/.Xauthority && \
     chown $DEVUSER_NAME:$DEVUSER_NAME /home/$DEVUSER_NAME/.Xauthority
 
-# Generate startup script
-RUN --mount=type=secret,id=devuser_name \
-    DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
-    echo '#!/bin/bash' > /start.sh && \
-    echo '/usr/sbin/sshd -D -e' >> /start.sh && \
-    chmod +x /start.sh
+# Customize opening message :D
+COPY welcome.conf /etc/motd
 
-# Expose SSH port
+# Copy start up script into the VM
+COPY VMLoad.sh /usr/local/bin/VMLoad.sh
+
+RUN chmod +x /usr/local/bin/VMLoad.sh
+
 EXPOSE 4242
 
 # Start SSH daemon
-CMD ["/start.sh"]
+CMD ["VMLoad.sh"]
