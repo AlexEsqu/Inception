@@ -53,6 +53,7 @@ rebuild: cleanup_ssh
 	docker-compose down --rmi all
 	docker-compose build --no-cache
 	docker-compose up -d
+	@echo "Connect with: ssh -X USER@localhost -p 4243"
 
 status:
 	@echo "DevVM Status:"

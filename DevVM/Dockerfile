@@ -85,12 +85,14 @@ RUN printf '%s\n' \
     "I'm trying to keep it tidy in here so I prepared lighter versions:" \
     "Firefox: firefox-esr" \
     "VS Code: code --no-sandbox" \
+    "" \
+    "" \
     > /etc/motd
 
 # Create directories and set permissions
 RUN --mount=type=secret,id=devuser_name \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
-    mkdir -p /home/$DEVUSER_NAME/workspace \
+    mkdir -p /home/$DEVUSER_NAME/data \
              /home/$DEVUSER_NAME/.ssh \
              /etc/ssh/keys && \
     chown -R $DEVUSER_NAME:$DEVUSER_NAME /home/$DEVUSER_NAME && \

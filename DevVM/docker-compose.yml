@@ -13,7 +13,7 @@ services:
     ports:
       - "4243:4242"
     volumes:
-      - devvm_workspace:/home/devuser/workspace
+      - devvm_workspace:/home/mkling/data
     restart: unless-stopped
 
 secrets:
