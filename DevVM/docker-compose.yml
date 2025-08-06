@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  devvm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+      secrets:
+        - devuser_name
+        - devuser_password
+        - root_password
+    image: devvm:latest
+    container_name: devvm
+    ports:
+      - "4243:4242"
+    environment:
+      - DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
+      - devvm_workspace:/home/devuser/workspace
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_PTRACE
+    network_mode: bridge
+
+secrets:
+  devuser_name:
+    file: ../.secrets/devvm/devuser_name
+  devuser_password:
+    file: ../.secrets/devvm/devuser_password
+  root_password:
+    file: ../.secrets/devvm/root_password
+
+volumes:
+  devvm_workspace:
+    driver: local
