@@ -29,7 +29,13 @@ RUN apk update && apk add --no-cache \
     glib \
     ttf-dejavu \
     gcompat \
-    libstdc++
+    libstdc++ \
+    openrc \
+    docker \
+    docker-cli-compose
+
+# mystery volume to include to get openrc happy
+VOLUME [/sys/fs/cgroup]
 
 # Install VS Code
 RUN wget -O vscode.tar.gz "https://update.code.visualstudio.com/latest/linux-x64/stable" && \
@@ -50,6 +56,7 @@ RUN --mount=type=secret,id=devuser_password \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
     DEVUSER_PASSWORD=$(cat /run/secrets/devuser_password) && \
     adduser -D -s /bin/bash $DEVUSER_NAME && \
+    adduser $DEVUSER_NAME docker && \
     echo "$DEVUSER_NAME:$DEVUSER_PASSWORD" | chpasswd && \
     echo "$DEVUSER_NAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
@@ -80,6 +87,25 @@ RUN --mount=type=secret,id=devuser_name \
 
 # Customize opening message :D
 COPY welcome.conf /etc/motd
+
+# Install rootless Docker dependencies
+RUN apk add --no-cache \
+    shadow-uidmap \
+    fuse-overlayfs \
+    slirp4netns \
+    iptables \
+    ip6tables
+
+# Configure rootless Docker for user
+RUN --mount=type=secret,id=devuser_name \
+    DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
+    # Set up user namespaces
+    echo "$DEVUSER_NAME:100000:65536" >> /etc/subuid && \
+    echo "$DEVUSER_NAME:100000:65536" >> /etc/subgid && \
+    # Create user runtime directory
+    mkdir -p /run/user/$(id -u $DEVUSER_NAME) && \
+    chown $DEVUSER_NAME:$DEVUSER_NAME /run/user/$(id -u $DEVUSER_NAME) && \
+    chmod 700 /run/user/$(id -u $DEVUSER_NAME)
 
 # Copy start up script into the VM
 COPY VMLoad.sh /usr/local/bin/VMLoad.sh

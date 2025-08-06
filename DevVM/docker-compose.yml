@@ -14,6 +14,7 @@ services:
       - "4243:4242"
     volumes:
       - devvm_workspace:/home/mkling/data
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     restart: unless-stopped
 
 secrets:
