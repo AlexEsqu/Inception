@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:3.18
 
 # Update package list and install required packages
 RUN apk update && apk add --no-cache \
@@ -15,9 +15,29 @@ RUN apk update && apk add --no-cache \
     gcompat \
     libstdc++ \
     tree \
-    xclock \
     xeyes \
-    ca-certificates
+    firefox-esr \
+    ca-certificates \
+    pciutils \
+    libx11 \
+    gtk+3.0 \
+    cairo \
+    pango \
+    fontconfig \
+    mesa-gl \
+    dbus \
+    glib \
+    ttf-dejavu \
+    gcompat \
+    libstdc++
+
+# Install VS Code
+RUN wget -O vscode.tar.gz "https://update.code.visualstudio.com/latest/linux-x64/stable" && \
+    mkdir -p /opt/vscode && \
+    tar -xzf vscode.tar.gz -C /opt/vscode --strip-components=1 && \
+    rm vscode.tar.gz && \
+    ln -s /opt/vscode/bin/code /usr/local/bin/code && \
+    chmod +x /opt/vscode/bin/code
 
 # Create root and set paswords
 RUN --mount=type=secret,id=root_password \
@@ -33,14 +53,6 @@ RUN --mount=type=secret,id=devuser_password \
     echo "$DEVUSER_NAME:$DEVUSER_PASSWORD" | chpasswd && \
     echo "$DEVUSER_NAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-# Install VS Code
-RUN wget -O vscode.tar.gz "https://update.code.visualstudio.com/latest/linux-x64/stable" && \
-    mkdir -p /opt/vscode && \
-    tar -xzf vscode.tar.gz -C /opt/vscode --strip-components=1 && \
-    rm vscode.tar.gz && \
-    ln -s /opt/vscode/bin/code /usr/local/bin/code && \
-    chmod +x /opt/vscode/bin/code
-
 # Generate SSH host keys
 RUN ssh-keygen -A
 
@@ -51,7 +63,7 @@ RUN sed -i 's/#Port 22/Port 4242/' /etc/ssh/sshd_config && \
     sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
     sed -i 's/X11Forwarding no/X11Forwarding yes/' /etc/ssh/sshd_config && \
     sed -i 's/#X11DisplayOffset 10/X11DisplayOffset 10/' /etc/ssh/sshd_config && \
-    sed -i 's/#X11UseLocalhost yes/X11UseLocalhost no/' /etc/ssh/sshd_config && \
+    sed -i 's/#X11UseLocalhost yes/X11UseLocalhost yes/' /etc/ssh/sshd_config && \
     sed -i 's/#AddressFamily any/AddressFamily inet/' /etc/ssh/sshd_config && \
     sed -i 's/AllowTcpForwarding no/AllowTcpForwarding yes/' /etc/ssh/sshd_config
 
@@ -70,7 +82,7 @@ RUN printf '%s\n' \
     "" \
     "~~ Welcome to my super dev VM ! ~~" \
     "" \
-    "SSH: ssh -X devuser@localhost -p 4243" \
+    "Firefox: " \
     "VS Code: code --no-sandbox" \
     > /etc/motd
 
@@ -78,13 +90,10 @@ RUN printf '%s\n' \
 RUN --mount=type=secret,id=devuser_name \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
     mkdir -p /home/$DEVUSER_NAME/workspace \
-             /home/$DEVUSER_NAME/.vscode-server \
              /home/$DEVUSER_NAME/.ssh \
-             /tmp/.X11-unix \
              /etc/ssh/keys && \
     chown -R $DEVUSER_NAME:$DEVUSER_NAME /home/$DEVUSER_NAME && \
     chmod 700 /home/$DEVUSER_NAME/.ssh && \
-    chmod 1777 /tmp/.X11-unix && \
     touch /home/$DEVUSER_NAME/.Xauthority && \
     chown $DEVUSER_NAME:$DEVUSER_NAME /home/$DEVUSER_NAME/.Xauthority
 
@@ -92,19 +101,6 @@ RUN --mount=type=secret,id=devuser_name \
 RUN --mount=type=secret,id=devuser_name \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
     echo '#!/bin/bash' > /start.sh && \
-    echo 'echo "🚀 Starting DevVM SSH daemon..."' >> /start.sh && \
-    echo '' >> /start.sh && \
-    echo '# Create required directories' >> /start.sh && \
-    echo 'mkdir -p /var/run/sshd' >> /start.sh && \
-    echo 'mkdir -p /tmp/.X11-unix' >> /start.sh && \
-    echo 'chmod 1777 /tmp/.X11-unix' >> /start.sh && \
-    echo '' >> /start.sh && \
-    echo '# Show SSH config for debugging' >> /start.sh && \
-    echo 'echo "📝 SSH Config:"' >> /start.sh && \
-    echo 'grep -E "(Port|X11|AllowTcp)" /etc/ssh/sshd_config' >> /start.sh && \
-    echo '' >> /start.sh && \
-    echo '# Start SSH daemon in foreground with debugging' >> /start.sh && \
-    echo 'echo "✅ SSH daemon starting on port 4242..."' >> /start.sh && \
     echo '/usr/sbin/sshd -D -e' >> /start.sh && \
     chmod +x /start.sh
 

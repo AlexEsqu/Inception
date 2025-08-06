@@ -24,17 +24,3 @@ echo "$rootpass" > .secrets/devvm/root_password
 # chmod 600 .secrets/*
 # chmod 700 .secrets
 
-echo ""
-echo "Secrets created successfully!"
-echo "Files created in .secrets/ directory"
-
-# Add to .gitignore if it exists
-if [ -f .gitignore ]; then
-    if ! grep -q ".secrets" .gitignore; then
-        echo ".secrets/" >> .gitignore
-        echo "📝 Added .secrets/ to .gitignore"
-    fi
-else
-    echo ".secrets/" > .gitignore
-    echo "📝 Created .gitignore with .secrets/"
-fi
