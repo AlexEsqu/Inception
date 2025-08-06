@@ -12,20 +12,21 @@ SSH_HOST		= [localhost]:4243
 
 all:
 	@echo "Starting DevVM with Docker Compose..."
-	@export DISPLAY=$$(echo $$DISPLAY) && \
-	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose up -d --build
+	docker-compose up -d --build
+	@echo ""
+	@echo "Connect with: ssh -X USER@localhost -p 4243"
 
 build:
 	@echo "Building DevVM..."
-	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose build
+	docker-compose build
 
 up:
 	@echo "Starting DevVM..."
-	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose up -d
+	docker-compose up -d
 
 down:
 	@echo "Stopping DevVM..."
-	DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker-compose down
+	docker-compose down
 
 clean: cleanup_ssh
 	@echo "Cleaning DevVM containers..."
@@ -57,7 +58,7 @@ status:
 	@echo "DevVM Status:"
 	docker-compose ps
 	@echo ""
-	@echo "Connect with: ssh -X devuser@localhost -p 4243"
+	@echo "Connect with: ssh -X USER@localhost -p 4243"
 
 cleanup_ssh:
 	@echo "Cleaning up SSH known hosts..."
@@ -65,9 +66,5 @@ cleanup_ssh:
 		ssh-keygen -f "$$HOME/.ssh/known_hosts" -R "$(SSH_HOST)" 2>/dev/null || true; \
 		echo "SSH known hosts cleaned"; \
 	fi
-
-setup_x11:
-	@chmod +x setup_x11.sh
-	@./setup_x11.sh
 
 .PHONY: all build up down clean clean_images fclean fclean_all rebuild status cleanup_ssh

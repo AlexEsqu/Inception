@@ -44,7 +44,7 @@ RUN --mount=type=secret,id=root_password \
     ROOT_PASSWORD=$(cat /run/secrets/root_password) && \
     echo "root:$ROOT_PASSWORD" | chpasswd
 
-# Create user, set passwords. add to sudo
+# Create user, set passwords, add to sudo
 RUN --mount=type=secret,id=devuser_password \
     --mount=type=secret,id=devuser_name \
     DEVUSER_NAME=$(cat /run/secrets/devuser_name) && \
