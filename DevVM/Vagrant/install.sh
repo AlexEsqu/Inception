@@ -46,3 +46,19 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+# Set up domain name
+echo "127.0.0.1 mkling.42.fr" | sudo tee -a /etc/hosts
+
+
+
+############
+# OPTIONAL #
+############
+
+# Prettyfy with a new landing message appearing only once:
+# FROM HOST: scp -P 4243 -r /home/mkling/Documents/Inception/DevVM/Vagrant/motd mkling@localhost:/home/mkling/.
+sudo mv motd /etc/
+sudo sed -i 's/session optional pam_motd.so noupdate/#session optional pam_motd.so noupdate/' /etc/pam.d/sshd
+
