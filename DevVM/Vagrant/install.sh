@@ -1,19 +1,22 @@
 #!/bin/bash
 
 # Copy sshd_config file into the VM
-# scp -P 4243 -r /home/mkling/Documents/Inception/DevVM/Vagrant/sshd_config mkling@localhost:/home/mkling/.
+# scp -P 4243 -r /home/$USER/Documents/Inception/DevVM/Vagrant/sshd_config $USER@localhost:/home/$USER/.
 
 # SSH connect into the VM
-# ssh -X mkling@localhost -p 4243
+# ssh -X $USER@localhost -p 4243
 
 # Add Sudo and add User to it / Need privilege/root
 su
 apt install sudo
-usermod -a -G sudo mkling
+usermod -a -G sudo $USER
 
 # Set up SSH
 sudo mv sshd_config /etc/ssh/sshd_config
 sudo ssh-keygen -A
+
+# Set up Make
+sudo apt install make
 
 # Install VS-Code
 sudo apt-get install wget gpg
@@ -46,10 +49,11 @@ echo \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
 
 
 # Set up domain name
-echo "127.0.0.1 mkling.42.fr" | sudo tee -a /etc/hosts
+echo "127.0.0.1 $USER.42.fr" | sudo tee -a /etc/hosts
 
 
 
@@ -58,7 +62,7 @@ echo "127.0.0.1 mkling.42.fr" | sudo tee -a /etc/hosts
 ############
 
 # Prettyfy with a new landing message appearing only once:
-# FROM HOST: scp -P 4243 -r /home/mkling/Documents/Inception/DevVM/Vagrant/motd mkling@localhost:/home/mkling/.
+# FROM HOST: scp -P 4243 -r /home/$USER/Documents/Inception/DevVM/Vagrant/motd $USER@localhost:/home/$USER/.
 sudo mv motd /etc/
 sudo sed -i 's/session optional pam_motd.so noupdate/#session optional pam_motd.so noupdate/' /etc/pam.d/sshd
 
