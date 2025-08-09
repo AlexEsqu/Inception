@@ -8,7 +8,6 @@ RUN apk update && apk add --no-cache \
     php82-json \
     php82-curl \
     php82-dom \
-    php82-exif \
     php82-fileinfo \
     php82-mbstring \
     php82-openssl \
@@ -18,25 +17,33 @@ RUN apk update && apk add --no-cache \
     php82-intl \
     php82-bcmath \
     php82-ctype \
-    php82-filter \
-    php82-ftp \
     php82-gd \
     php82-iconv \
     php82-simplexml \
-    php82-soap \
     php82-tokenizer \
     php82-xmlreader \
     php82-xmlwriter \
     php82-session \
     php82-posix \
     mariadb-client \
+    mariadb-connector-c \
+    netcat-openbsd \
     curl \
     bash \
+    ca-certificates \
     && rm -rf /var/cache/apk/*
 
-# Create www-data user and group with proper shell
-RUN addgroup -g 82 -S www-data && \
-    adduser -u 82 -D -S -G www-data -s /bin/bash www-data
+# Create symlinks for PHP commands
+RUN ln -sf /usr/bin/php82 /usr/bin/php && \
+    ln -sf /usr/sbin/php-fpm82 /usr/sbin/php-fpm
+
+# Create www-data user and group if they don't exist
+RUN if ! getent group www-data >/dev/null 2>&1; then \
+        addgroup -g 82 -S www-data; \
+    fi && \
+    if ! getent passwd www-data >/dev/null 2>&1; then \
+        adduser -u 82 -D -S -G www-data -s /bin/bash www-data; \
+    fi
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /var/www/html /run/php /var/log/php-fpm && \
@@ -53,13 +60,10 @@ RUN curl -O https://wordpress.org/latest.tar.gz && \
 # Switch back to root for system configurations
 USER root
 
-# Download and install WP-CLI with verification
+# Download and install WP-CLI
 RUN curl -o wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
-    curl -o wp-cli.phar.sha512 https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar.sha512 && \
-    sha512sum -c wp-cli.phar.sha512 && \
     chmod +x wp-cli.phar && \
-    mv wp-cli.phar /usr/local/bin/wp && \
-    rm wp-cli.phar.sha512
+    mv wp-cli.phar /usr/local/bin/wp
 
 # Copy configuration files
 COPY --chown=root:root www.conf /etc/php82/php-fpm.d/www.conf

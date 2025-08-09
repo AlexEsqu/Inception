@@ -10,13 +10,13 @@ networks:
 
 secrets:
   mariaDB_root_password:
-    file: ./secrets/mariadb_root_password.txt
+    file: ../.secrets/mariadb/mariadb_root_password.txt
   mariaDB_password:
-    file: ./secrets/mariadb_password.txt
+    file: ../.secrets/mariadb/mariadb_password.txt
   wordpress_admin_password:
-    file: ./secrets/wordpress_admin_password.txt
+    file: ../.secrets/wordpress/wordpress_admin_password.txt
   wordpress_user_password:
-    file: ./secrets/wordpress_user_password.txt
+    file: ../.secrets/wordpress/wordpress_user_password.txt
 
 services:
   mariadb:
@@ -30,13 +30,13 @@ services:
       - mariaDB_root_password
       - mariaDB_password
     volumes:
-      - wordpress_db:/var/lib/mariadb
+      - wordpress_db:/var/lib/mysql
     networks:
       - inception
     expose:
       - "3306"
     healthcheck:
-      test: ["CMD", "mariadbadmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
 
