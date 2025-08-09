@@ -2,3 +2,4 @@ Inceptionsubject.pdf
 .secrets/*
 */.env
 .secrets
+.env
