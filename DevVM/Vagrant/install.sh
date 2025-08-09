@@ -51,7 +51,6 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker $USER
 
-
 # Set up domain name
 echo "127.0.0.1 $USER.42.fr" | sudo tee -a /etc/hosts
 
