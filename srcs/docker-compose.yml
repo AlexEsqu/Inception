@@ -22,59 +22,57 @@ services:
   mariadb:
     build: ./mariadb
     container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - wordpress_db:/var/lib/mysql
     restart: unless-stopped
-    environment:
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
     secrets:
       - mariaDB_root_password
       - mariaDB_password
-    volumes:
-      - wordpress_db:/var/lib/mysql
     networks:
       - inception
-    expose:
-      - "3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   wordpress:
     build: ./wordpress
     container_name: wordpress
-    restart: unless-stopped
-    depends_on:
-      mariadb:
-        condition: service_healthy
     environment:
-      WORDPRESS_DB_HOST: mariadb:3306
-      WORDPRESS_DB_NAME: ${MARIADB_DATABASE}
-      WORDPRESS_DB_USER: ${MARIADB_USER}
-      WORDPRESS_URL: ${WORDPRESS_URL}
-      WORDPRESS_TITLE: ${WORDPRESS_TITLE}
-      WORDPRESS_ADMIN_USER: ${WORDPRESS_ADMIN_USER}
-      WORDPRESS_ADMIN_EMAIL: ${WORDPRESS_ADMIN_EMAIL}
-      WORDPRESS_USER: ${WORDPRESS_USER}
-      WORDPRESS_USER_EMAIL: ${WORDPRESS_USER_EMAIL}
+      DB_HOST: mariadb
+      DB_USER: ${MARIADB_USER}
+      DB_NAME: ${MARIADB_NAME}
+    env_file:
+      - .env
     secrets:
       - mariaDB_password
+      - mariaDB_root_password
       - wordpress_admin_password
       - wordpress_user_password
     volumes:
       - wordpress_files:/var/www/html
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
     networks:
       - inception
-    expose:
-      - "9000"
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm82 -t"]
+      test: ["CMD", "nc", "-z", "localhost", "9000"]
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 90s
 
   nginx:
     build: ./nginx
     container_name: nginx
+    env_file:
+      - .env
     restart: unless-stopped
     depends_on:
       wordpress:
@@ -86,6 +84,8 @@ services:
     networks:
       - inception
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "https://localhost:443", "--no-check-certificate"]
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 60s

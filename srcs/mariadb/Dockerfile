@@ -1,32 +1,21 @@
 FROM alpine:3.20
 
+ARG MARIADB_ADDRESS_IN_DOCKER=/var/lib/mysql
+ARG MARIADB_VOLUME_ADDRESS_IN_HOSTMACHINE=/var/lib/mysql
+ARG MARIADB_CONF_FILE=my.conf
+ARG MARIADB_STARTUP_FILE=mariadb_setup.sh
+
 # Install MariaDB and required packages
 RUN apk update && apk add --no-cache \
     mariadb \
     mariadb-client \
-    bash \
-    su-exec \
-    && rm -rf /var/cache/apk/*
+    bash
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /var/lib/mysql /run/mysqld /var/log/mysql && \
-    chown -R mysql:mysql /var/lib/mysql /run/mysqld /var/log/mysql && \
-    chmod 755 /var/lib/mysql
+# Copy configuration and script files
+COPY ${MARIADB_STARTUP_FILE} /usr/local/bin/${MARIADB_STARTUP_FILE}
 
-# Copy configuration files
-COPY my.conf /etc/my.cnf
-COPY setup.sh /setup.sh
-
-# Set proper permissions
-RUN chmod +x /setup.sh && \
-    chmod 644 /etc/my.cnf
-
-# Expose MariaDB port
-EXPOSE 3306
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD mysqladmin ping -h localhost || exit 1
+# Set permissions for the startup script
+RUN chmod +x /usr/local/bin/${MARIADB_STARTUP_FILE}
 
 # Start the setup script as root, it will switch to mysql user internally
-CMD ["/setup.sh"]
+CMD /usr/local/bin/${MARIADB_STARTUP_FILE}
