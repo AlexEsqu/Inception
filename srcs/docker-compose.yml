@@ -1,12 +1,12 @@
 secrets:
   mariadb_root_password:
-    file: ../.secrets/mariadb_root_password.txt
-  mariadb_password:
-    file: ../.secrets/mariadb_password.txt
-  wordpress_admin_password:
-    file: ../.secrets/wordpress_root_password.txt
+    file: ../.secrets/mariadb/mariadb_root_password.txt
+  mariadb_user_password:
+    file: ../.secrets/mariadb/mariadb_user_password.txt
+  wordpress_root_password:
+    file: ../.secrets/wordpress/wordpress_root_password.txt
   wordpress_user_password:
-    file: ../.secrets/wordpress_user_password.txt
+    file: ../.secrets/wordpress/wordpress_user_password.txt
 
 services:
   nginx:
@@ -37,7 +37,7 @@ services:
       - mariadb_data:/var/lib/mysql
     secrets:
       - mariadb_root_password
-      - mariadb_password
+      - mariadb_user_password
     networks:
       - inception_network
     restart: unless-stopped
@@ -55,8 +55,8 @@ services:
       - wordpress_data:/var/www/html
     secrets:
       - mariadb_root_password
-      - mariadb_password
-      - wordpress_admin_password
+      - mariadb_user_password
+      - wordpress_root_password
       - wordpress_user_password
     networks:
       - inception_network
@@ -64,15 +64,17 @@ services:
 
 volumes:
   wordpress_data:
+    driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/mkling/data/wordpress
+      device: ${HOME}/data/wordpress
   mariadb_data:
+    driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/mkling/data/mariadb
+      device: ${HOME}/data/mariadb
 
 networks:
   inception_network:
