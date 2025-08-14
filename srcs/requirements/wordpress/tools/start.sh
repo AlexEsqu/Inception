@@ -61,7 +61,7 @@ if [ $TRIES -eq $MAX_TRIES ]; then
     echo "Network test:"
     nc -zv "$MARIADB_DATABASE_NAME" 3306
     echo "Connection attempt output:"
-    mysql -h"$MARIADB_DATABASE_NAME" -u"$MARIADB_USER" -p"$WORDPRESS_DB_PASSWORD" "$WORDPRESS_DB_NAME" -e "SELECT 1;" 2>&1
+    mysql -h"$MARIADB_DATABASE_NAME" -u"$MARIADB_USER" -p"$DB_PASSWORD" "$WORDPRESS_DB_NAME" -e "SELECT 1;" 2>&1
     exit 1
 fi
 
@@ -91,6 +91,30 @@ if [ ! -f wp-config.php ]; then
         --admin_password="$WP_ROOT_PASSWORD" \
         --admin_email="$WORDPRESS_ADMIN_EMAIL" \
         --allow-root
+
+    # Install and activate theme
+    wp theme install astra --activate --allow-root
+
+    # Install and activate plugins
+    wp plugin install elementor wpforms-lite wordpress-seo disable-comments limit-login-attempts-reloaded --activate --allow-root
+
+    # Create sample pages
+    wp post create --post_type=page --post_title='About Me' --post_status=publish --post_content='Write about yourself here' --allow-root
+    wp post create --post_type=page --post_title='Portfolio' --post_status=publish --post_content='Showcase your work here' --allow-root
+
+    # Set site title & tagline
+    wp option update blogname 'Inception'
+    wp option update blogdescription 'Showcasing my projects and thoughts'
+
+    # Set pretty permalinks
+    wp rewrite structure '/%postname%/' --hard --allow-root
+    wp rewrite flush --allow-root
+
+    # Disable file editing
+    echo "define('DISALLOW_FILE_EDIT', true);" >> wp-config.php
+
+    echo "WordPress portfolio blog setup complete!"
+
 
     echo "WordPress installation completed!"
 else
