@@ -92,19 +92,80 @@ if [ ! -f wp-config.php ]; then
         --admin_email="$WORDPRESS_ADMIN_EMAIL" \
         --allow-root
 
-    # Install and activate theme
-    wp theme install astra --activate --allow-root
+    # wp theme install https://public-api.wordpress.com/rest/v1/themes/download/mpho.zip --activate --allow-root
 
     # Install and activate plugins
     wp plugin install elementor wpforms-lite wordpress-seo disable-comments limit-login-attempts-reloaded --activate --allow-root
 
-    # Create sample pages
-    wp post create --post_type=page --post_title='About Me' --post_status=publish --post_content='Write about yourself here' --allow-root
-    wp post create --post_type=page --post_title='Portfolio' --post_status=publish --post_content='Showcase your work here' --allow-root
-
     # Set site title & tagline
     wp option update blogname 'Inception'
-    wp option update blogdescription 'Showcasing my projects and thoughts'
+    wp option update blogdescription 'Portfolio : Programming & Graphics Projects'
+
+    HTML_DIR="/var/www/html/pages"
+
+    # Remove default "Hello World" post
+    echo "Removing default 'Hello World' post..."
+    wp post delete 1 --force --allow-root
+    wp post delete $(wp post list --post_type=page --title="Sample Page" --format=ids --allow-root) --force --allow-root
+
+    # Create home page from index.html
+    if [ -f /var/www/html/pages/index.html ]; then
+        echo "Creating Home page from index.html..."
+        
+        # Read HTML content
+        content=$(cat /var/www/html/pages/index.html | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+        
+        # Create WordPress page as home page
+        wp post create \
+            --post_type=page \
+            --post_title="Home" \
+            --post_status=publish \
+            --post_content="$content" \
+            --allow-root
+        
+        # Get the page ID
+        HOME_PAGE_ID=$(wp post list --post_type=page --post_title="Home" --format=ids --allow-root)
+        
+        # Set as front page
+        wp option update show_on_front 'page' --allow-root
+        wp option update page_on_front "$HOME_PAGE_ID" --allow-root
+        
+        echo "Set Home page as front page (ID: $HOME_PAGE_ID)"
+    fi
+    
+    if [ -f /var/www/html/pages/about-me.html ]; then
+        echo "Creating About Me page from about-me.html..."
+        
+        content=$(cat /var/www/html/pages/about-me.html | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+        
+        wp post create \
+            --post_type=page \
+            --post_title="About Me" \
+            --post_status=publish \
+            --post_content="$content" \
+            --allow-root
+        
+        # Get the page ID
+        HOME_PAGE_ID=$(wp post list --post_type=page --post_title="Home" --format=ids --allow-root)
+        
+    fi
+
+    if [ -f /var/www/html/pages/portfolio.html ]; then
+        echo "Creating Portfolio page from portfolio.html..."
+        
+        content=$(cat /var/www/html/pages/portfolio.html | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
+        
+        wp post create \
+            --post_type=page \
+            --post_title="Portfolio" \
+            --post_status=publish \
+            --post_content="$content" \
+            --allow-root
+        
+        # Get the page ID
+        HOME_PAGE_ID=$(wp post list --post_type=page --post_title="Home" --format=ids --allow-root)
+        
+    fi
 
     # Set pretty permalinks
     wp rewrite structure '/%postname%/' --hard --allow-root

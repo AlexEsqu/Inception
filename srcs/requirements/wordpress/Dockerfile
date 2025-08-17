@@ -33,7 +33,7 @@ RUN apk update && apk add --no-cache \
 RUN adduser -u 82 -D -S -G www-data www-data
 
 # Create necessary directories
-RUN mkdir -p /var/www/html /var/log/php81 && \
+RUN mkdir -p /var/www/html /var/log/php81 /var/www/html/pages && \
     chown -R www-data:www-data /var/www/html /var/log/php81
 
 # Copy PHP-FPM configuration
@@ -41,10 +41,13 @@ COPY conf/www.conf /etc/php81/php-fpm.d/www.conf
 COPY conf/php.ini /etc/php81/php.ini
 
 # Copy startup script
-COPY tools/start.sh /start.sh
+COPY tools/start.sh /usr/local/bin/start.sh
+COPY tools/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
 
-# Make scripts executable
-RUN chmod +x /start.sh
+# Copy static pages
+COPY pages/ /var/www/html/pages/
 
 # Download WP-CLI
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
@@ -57,5 +60,8 @@ WORKDIR /var/www/html
 # Expose PHP-FPM port
 EXPOSE 9000
 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:9000/ || exit 1
+
 # Start as root to handle permissions, then switch to www-data
-CMD ["/start.sh"]
+CMD ["start.sh"]

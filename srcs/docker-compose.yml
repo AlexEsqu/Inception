@@ -41,6 +41,12 @@ services:
     networks:
       - inception_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   wordpress:
     build:
@@ -61,6 +67,12 @@ services:
     networks:
       - inception_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 volumes:
   wordpress_data:
