@@ -5,13 +5,14 @@ DOMAIN = mkling.42.fr
 DOCKER_COMPOSE = docker compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
 
 all: build up
-	
+
 build:
 	@echo "Building Docker images..."
 	$(DOCKER_COMPOSE) build
 
 up:
 	@echo "Starting services..."
+	mkdir -p ../../data/wordpress ../../data/mariadb ../../data/ftp
 	$(DOCKER_COMPOSE) up -d
 
 down:

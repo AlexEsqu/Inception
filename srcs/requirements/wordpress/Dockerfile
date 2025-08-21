@@ -1,67 +1,50 @@
-FROM alpine:3.18
+FROM alpine:3.20
 
 # Install PHP-FPM and required extensions
 RUN apk update && apk add --no-cache \
-    php81 \
-    php81-fpm \
-    php81-mysqli \
-    php81-json \
-    php81-curl \
-    php81-dom \
-    php81-exif \
-    php81-fileinfo \
-    php81-mbstring \
-    php81-openssl \
-    php81-xml \
-    php81-zip \
-    php81-redis \
-    php81-ftp \
-    php81-ctype \
-    php81-session \
-    php81-tokenizer \
-    php81-pecl-imagick \
-    php81-gd \
-    php81-iconv \
-    php81-phar \
-    php81-sodium \
+    php \
+    php-fpm \
+    php-mysqli \
+    php-json \
+    php-curl \
+    php-dom \
+    php-exif \
+    php-fileinfo \
+    php-mbstring \
+    php-openssl \
+    php-xml \
+    php-zip \
+    php-redis \
+    php-ftp \
+    php-ctype \
+    php-session \
+    php-tokenizer \
+    php-imagick \
+    php-gd \
+    php-iconv \
+    php-phar \
+    php-sodium \
     mysql-client \
     curl \
-    sudo \
     && rm -rf /var/cache/apk/*
 
-# Create www-data user and group
-RUN adduser -u 82 -D -S -G www-data www-data
-
 # Create necessary directories
-RUN mkdir -p /var/www/html /var/log/php81 /var/www/html/pages && \
-    chown -R www-data:www-data /var/www/html /var/log/php81
-
-# Copy PHP-FPM configuration
-COPY conf/www.conf /etc/php81/php-fpm.d/www.conf
-COPY conf/php.ini /etc/php81/php.ini
+RUN mkdir -p /var/www/html /var/log/php /var/www/html/pages /run/php
 
 # Copy startup script
 COPY tools/start.sh /usr/local/bin/start.sh
-COPY tools/healthcheck.sh /usr/local/bin/healthcheck.sh
 RUN chmod +x /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/healthcheck.sh
 
 # Copy static pages
-COPY pages/ /var/www/html/pages/
+# COPY pages/ /var/www/html/pages/
 
-# Download WP-CLI
+# Download WP-CLI and put it in the path as wp
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
     mv wp-cli.phar /usr/local/bin/wp
 
-# Set working directory
-WORKDIR /var/www/html
-
 # Expose PHP-FPM port
 EXPOSE 9000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD curl -f http://localhost:9000/ || exit 1
-
-# Start as root to handle permissions, then switch to www-data
+# start wordpress install, then wordpress proper
 CMD ["start.sh"]

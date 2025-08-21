@@ -24,7 +24,7 @@ services:
       - wordpress_data:/var/www/html
     networks:
       - inception_network
-    restart: unless-stopped
+    restart: always
 
   mariadb:
     build:
@@ -40,13 +40,7 @@ services:
       - mariadb_user_password
     networks:
       - inception_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
+    restart: always
 
   wordpress:
     build:
@@ -57,6 +51,8 @@ services:
       - mariadb
     env_file:
       .env
+    environment:
+      - WP_REDIS_HOST=redis
     volumes:
       - wordpress_data:/var/www/html
     secrets:
@@ -66,13 +62,44 @@ services:
       - wordpress_user_password
     networks:
       - inception_network
+    restart: always
+
+  redis:
+    build:
+      context: ./bonus/redis
+      dockerfile: Dockerfile
+    container_name: redis
+    networks:
+      - inception_network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  ftp:
+    build:
+      context: ./bonus/ftp
+      dockerfile: Dockerfile
+    container_name: ftp
+    networks:
+      - inception_network
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    volumes:
+      - ftp_data:/home/ftpuser/ftp
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
+
+  adminer:
+    build:
+      context: ./bonus/adminer
+      dockerfile: Dockerfile
+    container_name: adminer
+    networks:
+      - inception_network
+    restart: unless-stopped
+
 
 volumes:
   wordpress_data:
@@ -87,6 +114,14 @@ volumes:
       type: none
       o: bind
       device: ${HOME}/data/mariadb
+  ftp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${HOME}/data/ftp
+  redis_data:
+    driver: local
 
 networks:
   inception_network:
