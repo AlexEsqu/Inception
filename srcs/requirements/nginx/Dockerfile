@@ -3,6 +3,7 @@ FROM alpine:3.20
 # install nginx, and openssl for SSL certificates
 RUN apk update && apk add \
     nginx \
+	curl \
     openssl
 
 #  create directory for keys and certificates

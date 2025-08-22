@@ -7,6 +7,21 @@ WP_ROOT_PASSWORD=$(cat /run/secrets/wordpress_root_password)
 WP_PASSWORD=$(cat /run/secrets/wordpress_user_password)
 echo "Secrets loaded successfully : ${MARIADB_DATABASE_NAME} ${MARIADB_USER} ${DB_ROOT_PASSWORD} ${DB_PASSWORD}"
 
+echo "Waiting for MariaDB to be connectable..."
+MAX_TRIES=30
+TRIES=0
+until mysqladmin ping -h"$MARIADB_DATABASE_NAME" -u"$MARIADB_USER" -p"$DB_PASSWORD" --silent; do
+    TRIES=$((TRIES+1))
+    if [ $TRIES -ge $MAX_TRIES ]; then
+        echo "MariaDB is still not available after $MAX_TRIES attempts, exiting."
+        exit 1
+    fi
+    echo "MariaDB not ready yet... ($TRIES/$MAX_TRIES)"
+    sleep 2
+done
+echo "MariaDB is up and accepting connections!"
+
+
 cd /var/www/html
 
 if [ ! -f wp-config.php ]; then
@@ -35,9 +50,6 @@ if [ ! -f wp-config.php ]; then
 		--role=author \
 		--user_pass=$WP_PASSWORD \
 		--allow-root
-
-	echo "Modifying the www.conf to allow connections from nginx..."
-	sed -i 's/listen = 127.0.0.1:9000/listen = 9000/g'  /etc/php83/php-fpm.d/www.conf
 
 	echo "setting up redis environment values"
 	wp config set WP_REDIS_HOST 'redis' --type=constant --allow-root
@@ -103,6 +115,9 @@ if [ ! -f wp-config.php ]; then
 else
 	echo "WordPress already installed."
 fi
+
+echo "Modifying the www.conf to allow connections from nginx..."
+sed -i 's/listen = 127.0.0.1:9000/listen = 0.0.0.0:9000/g'  /etc/php83/php-fpm.d/www.conf
 
 echo "Starting PHP-FPM..."
 exec php-fpm83 --nodaemonize

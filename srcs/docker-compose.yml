@@ -7,6 +7,8 @@ secrets:
     file: ../.secrets/wordpress/wordpress_root_password.txt
   wordpress_user_password:
     file: ../.secrets/wordpress/wordpress_user_password.txt
+  ftp_password:
+    file: ../.secrets/ftp/ftp_password.txt
 
 services:
   nginx:
@@ -17,14 +19,21 @@ services:
     env_file:
       .env
     depends_on:
-      - wordpress
+      wordpress:
+        condition: service_healthy
     ports:
       - "0.0.0.0:443:443"
     volumes:
       - wordpress_data:/var/www/html
+      - adminer_data:/var/www/adminer
     networks:
       - inception_network
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-k", "https://mkling.42.fr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mariadb:
     build:
@@ -40,6 +49,11 @@ services:
       - mariadb_user_password
     networks:
       - inception_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   wordpress:
@@ -48,7 +62,8 @@ services:
       dockerfile: Dockerfile
     container_name: wordpress
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     env_file:
       .env
     environment:
@@ -62,6 +77,11 @@ services:
       - wordpress_user_password
     networks:
       - inception_network
+    healthcheck:
+      test: ["CMD", "php-fpm83", "-t"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   redis:
@@ -75,6 +95,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   ftp:
@@ -82,13 +107,22 @@ services:
       context: ./bonus/ftp
       dockerfile: Dockerfile
     container_name: ftp
+    env_file:
+      .env
+    secrets:
+      - ftp_password
     networks:
       - inception_network
     ports:
       - "21:21"
       - "21100-21110:21100-21110"
     volumes:
-      - ftp_data:/home/ftpuser/ftp
+      - wordpress_data:/home/ftpuser/ftp
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "21"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   adminer:
@@ -98,8 +132,14 @@ services:
     container_name: adminer
     networks:
       - inception_network
+    volumes:
+      - adminer_data:/var/www/adminer
+    healthcheck:
+      test: ["CMD", "curl", "-k", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
-
 
 volumes:
   wordpress_data:
@@ -114,13 +154,9 @@ volumes:
       type: none
       o: bind
       device: ${HOME}/data/mariadb
-  ftp_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${HOME}/data/ftp
   redis_data:
+    driver: local
+  adminer_data:
     driver: local
 
 networks:
