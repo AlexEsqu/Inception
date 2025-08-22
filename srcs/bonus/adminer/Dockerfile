@@ -8,10 +8,8 @@ RUN apk add --no-cache php \
 	wget \
 	curl
 
-RUN mkdir -p /var/www/adminer
+# Sadly can't install in the docker since on shared volume
+COPY tools/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
-RUN wget -O /var/www/adminer/index.php https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php
-
-WORKDIR /var/www/adminer
-
-CMD ["php-fpm83", "-F"]
+CMD ["start.sh"]

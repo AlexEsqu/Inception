@@ -25,7 +25,6 @@ services:
       - "0.0.0.0:443:443"
     volumes:
       - wordpress_data:/var/www/html
-      - adminer_data:/var/www/adminer
     networks:
       - inception_network
     restart: always
@@ -133,9 +132,9 @@ services:
     networks:
       - inception_network
     volumes:
-      - adminer_data:/var/www/adminer
+      - wordpress_data:/var/www/html
     healthcheck:
-      test: ["CMD", "curl", "-k", "http://localhost:8080"]
+      test: ["CMD", "nc", "-z", "localhost", "9000"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -155,8 +154,6 @@ volumes:
       o: bind
       device: ${HOME}/data/mariadb
   redis_data:
-    driver: local
-  adminer_data:
     driver: local
 
 networks:
