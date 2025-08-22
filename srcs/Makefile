@@ -12,7 +12,8 @@ build:
 
 up:
 	@echo "Starting services..."
-	mkdir -p ../../data/wordpress ../../data/mariadb ../../data/ftp
+	mkdir -p ${HOME}/data/mariadb ${HOME}/data/wordpress
+	sudo chmod 777 ${HOME}/data/mariadb ${HOME}/data/wordpress
 	$(DOCKER_COMPOSE) up -d
 
 down:

@@ -21,12 +21,12 @@ until mysqladmin ping -h"$MARIADB_DATABASE_NAME" -u"$MARIADB_USER" -p"$DB_PASSWO
 done
 echo "MariaDB is up and accepting connections!"
 
+echo "Downloading WordPress..."
+php -d memory_limit=512M /usr/local/bin/wp core download --allow-root
 
 cd /var/www/html
 
 if [ ! -f wp-config.php ]; then
-	echo "Downloading WordPress..."
-	php -d memory_limit=512M /usr/local/bin/wp core download --allow-root
 
 	echo "Creating wp-config.php..."
 	wp config create \
