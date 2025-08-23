@@ -9,7 +9,7 @@ RUN apk add --no-cache php \
 	curl
 
 RUN mkdir -p /var/www/adminer \
-	&& curl -o /var/www/adminer/index.php https://www.adminer.org/latest.php
+	&& wget -O /var/www/adminer/index.php https://www.adminer.org/latest.php
 
 RUN sed -i 's/listen = 127.0.0.1:9000/listen = 0.0.0.0:8080/g' /etc/php83/php-fpm.d/www.conf
 
