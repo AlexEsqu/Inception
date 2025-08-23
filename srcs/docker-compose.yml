@@ -122,7 +122,7 @@ services:
       - "21:21"
       - "21100-21110:21100-21110"
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "21"]
+      test: ["CMD", "nc", "-z", "0.0.0.0", "21"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -144,6 +144,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  grafana:
+    build:
+      context: ./bonus/grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - inception_network
     restart: unless-stopped
 
 volumes:
