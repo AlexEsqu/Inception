@@ -9,7 +9,7 @@ FTP_PASSWORD=$(cat /run/secrets/ftp_password)
 
 echo "Adding user..."
 if ! id "$FTP_USER" >/dev/null 2>&1; then
-    adduser -D -h /home/$FTP_USER $FTP_USER
+    adduser -D -h /var/www/html $FTP_USER
     id "$FTP_USER" || (echo "User $FTP_USER not found after adduser!" && exit 1)
 fi
 
