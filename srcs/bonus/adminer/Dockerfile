@@ -8,8 +8,11 @@ RUN apk add --no-cache php \
 	wget \
 	curl
 
-# Sadly can't install in the docker since on shared volume
-COPY tools/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+RUN mkdir -p /var/www/adminer \
+    && curl -o /var/www/adminer/index.php https://www.adminer.org/latest.php
 
-CMD ["start.sh"]
+RUN sed -i 's/listen = 127.0.0.1:9000/listen = 0.0.0.0:8080/g' /etc/php83/php-fpm.d/www.conf
+
+EXPOSE 8080
+
+CMD ["php-fpm83", "--nodaemonize"]

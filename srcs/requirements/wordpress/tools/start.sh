@@ -21,10 +21,11 @@ until mysqladmin ping -h"$MARIADB_DATABASE_NAME" -u"$MARIADB_USER" -p"$DB_PASSWO
 done
 echo "MariaDB is up and accepting connections!"
 
+# Fun fact : The bad placement of this command cost me 1 full hour of debugging
+cd /var/www/html
+
 echo "Downloading WordPress..."
 php -d memory_limit=512M /usr/local/bin/wp core download --allow-root
-
-cd /var/www/html
 
 if [ ! -f wp-config.php ]; then
 

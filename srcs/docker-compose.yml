@@ -11,6 +11,7 @@ secrets:
     file: ../.secrets/ftp/ftp_password.txt
 
 services:
+
   nginx:
     build:
       context: ./requirements/nginx
@@ -18,6 +19,8 @@ services:
     container_name: nginx
     env_file:
       .env
+    environment:
+      - WORDPRESS_URL=${WORDPRESS_URL}
     depends_on:
       wordpress:
         condition: service_healthy
@@ -25,6 +28,7 @@ services:
       - "0.0.0.0:443:443"
     volumes:
       - wordpress_data:/var/www/html
+      - adminer_data:/var/www/adminer
     networks:
       - inception_network
     restart: always
@@ -115,8 +119,6 @@ services:
     ports:
       - "21:21"
       - "21100-21110:21100-21110"
-    volumes:
-      - wordpress_data:/home/ftpuser/ftp
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "21"]
       interval: 10s
@@ -131,8 +133,10 @@ services:
     container_name: adminer
     networks:
       - inception_network
+    ports:
+      - "8080:8080"
     volumes:
-      - wordpress_data:/var/www/html
+      - adminer_data:/var/www/adminer
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "9000"]
       interval: 10s
@@ -154,6 +158,8 @@ volumes:
       o: bind
       device: ${HOME}/data/mariadb
   redis_data:
+    driver: local
+  adminer_data:
     driver: local
 
 networks:

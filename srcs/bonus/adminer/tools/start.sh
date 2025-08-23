@@ -29,7 +29,6 @@ fi
 
 # Configure PHP-FPM to listen on all interfaces
 echo "Configuring PHP-FPM..."
-sed -i 's/listen = 127.0.0.1:9000/listen = 0.0.0.0:9000/g' /etc/php83/php-fpm.d/www.conf
 
 # Check if sed succeeded
 if ! grep -q "listen = 0.0.0.0:9000" /etc/php83/php-fpm.d/www.conf; then

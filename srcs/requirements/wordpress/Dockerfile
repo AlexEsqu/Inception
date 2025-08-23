@@ -35,9 +35,6 @@ RUN mkdir -p /var/www/html /var/log/php /var/www/html/pages /run/php
 COPY tools/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
-# Copy static pages
-# COPY pages/ /var/www/html/pages/
-
 # Download WP-CLI and put it in the path as wp
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
