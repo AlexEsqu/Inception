@@ -16,5 +16,7 @@ fi
 echo "Setting user and passwords..."
 echo "$FTP_USER:$FTP_PASSWORD" | chpasswd
 
+chmod a-w /var/www/html
+
 echo "Launching vsftpd..."
 exec /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
