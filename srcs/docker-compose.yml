@@ -116,6 +116,8 @@ services:
       - ftp_password
     networks:
       - inception_network
+    volumes:
+      - wordpress_data:/var/www/html
     ports:
       - "21:21"
       - "21100-21110:21100-21110"
@@ -138,7 +140,7 @@ services:
     volumes:
       - adminer_data:/var/www/adminer
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9000"]
+      test: ["CMD", "php-fpm83", "-t"]
       interval: 10s
       timeout: 5s
       retries: 5
