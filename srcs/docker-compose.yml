@@ -157,7 +157,16 @@ services:
       - inception_network
     restart: unless-stopped
 
-
+  hugo:
+    build:
+      context: ./bonus/hugo
+      dockerfile: Dockerfile
+    container_name: hugo
+    ports:
+      - "1313:1313"
+    networks:
+      - inception_network
+    restart: unless-stopped
 
 volumes:
   wordpress_data:
