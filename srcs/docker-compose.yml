@@ -157,6 +157,8 @@ services:
       - inception_network
     restart: unless-stopped
 
+
+
 volumes:
   wordpress_data:
     driver: local

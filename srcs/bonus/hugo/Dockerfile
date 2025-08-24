@@ -1,15 +1,19 @@
 FROM alpine:3.20
 
-# Install dependencies
-RUN apk add --no-cache curl
+RUN apk add --no-cache hugo git
 
-# Download and install Hugo
-RUN curl -L https://github.com/gohugoio/hugo/releases/download/v$0.125.7/hugo_extended_$0.125.7_linux-amd64.tar.gz \
-    | tar -xz -C /usr/local/bin hugo
-
-# Create a directory for your site
 WORKDIR /site
+
+RUN hugo new site . --force
+
+# Add a theme
+RUN git clone --depth 1 https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke && \
+	echo 'theme = "ananke"' >> config.toml
+
+COPY pages/ static/
+
+RUN hugo new posts/my-first-post.md
 
 EXPOSE 1313
 
-CMD ["hugo", "server", "--bind", "0.0.0.0", "--baseURL", "http://localhost:1313", "--appendPort=false", "--disableFastRender"]
+CMD ["hugo", "server", "--bind=0.0.0.0"]
