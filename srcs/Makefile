@@ -52,14 +52,15 @@ init: secrets hosts build up
 	info
 
 info:
-	@echo "Access wordpress at: https://$(DOMAIN)"
-	@echo "Access wordpress admin panel at: https://$(DOMAIN)/admin"
-	@echo "Access adminer at: https://$(DOMAIN)/adminer or https://$(DOMAIN)/adminer/index.php"
-	@echo "		Server: mariadb"
-	@echo "		Username: <db_user>"
-	@echo "		Password: <db_user password>"
-	@echo "		Database: wordpress_db"
-	@echo "Access grafana at: http://$(DOMAIN):3000"
-	@echo "		Reminder: That is a http, not https..."
+	@echo "Access wordpress at:	https://$(DOMAIN)"
+	@echo "Access wp admin at:	https://$(DOMAIN)/admin"
+	@echo "Access adminer at:	https://$(DOMAIN)/adminer"
+	@echo "	Server: mariadb"
+	@echo "	Username: <db_user>"
+	@echo "	Password: <db_user password>"
+	@echo "	Database: wordpress_db"
+	@echo "Access grafana at:	http://$(DOMAIN):3000"
+	@echo "Access hugo at:		http://$(DOMAIN):1313"
+	@echo "	Reminder: That is a http, not https..."
 
 .PHONY: all build up down restart logs status clean fclean re secrets hosts init info
