@@ -41,39 +41,25 @@ fclean:
 re: fclean build up
 
 secrets:
-	@echo "Creating secrets directory..."
-	@mkdir -p srcs/secrets
-	@if [ ! -f ../../.secrets/mariadb/mariadb_user_password.txt ]; then \
-		echo "Creating mariadb_user_password.txt..."; \
-		openssl rand -base64 32 > ../../.secrets/mariadb/mariadb_user_password.txt; \
-	fi
-	@if [ ! -f ../../.secrets/mariadb_root_password.txt ]; then \
-		echo "Creating mariadb_root_password.txt..."; \
-		openssl rand -base64 32 > ../../.secrets/mariadb/mariadb_root_password.txt; \
-	fi
-	@if [ ! -f ../../.secrets/wordpress/wordpress_admin_password.txt ]; then \
-		echo "Creating wordpress_admin_password.txt..."; \
-		openssl rand -base64 32 > ../../.secrets/wordpress/wordpress_root_password.txt; \
-	fi
-	@if [ ! -f ../../.secrets/wordpress/wordpress_user_password.txt ]; then \
-		echo "Creating wordpress_user_password.txt..."; \
-		openssl rand -base64 32 > ../../.secrets/wordpress/wordpress_user_password.txt; \
-	fi
-	@if [ ! -f ../../.secrets/ftp/ftp_password.txt ]; then \
-		echo "Creating ftp_password.txt..."; \
-		openssl rand -base64 32 > ../../.secrets/ftp/ftp_password.txt; \
-	fi
-	@echo "Secrets created successfully!"
+	@./createsecrets.sh
 
 hosts:
 	@echo "Adding domain to /etc/hosts..."
-	@sudo grep -q "$(WORDPRESS_DOMAIN)" /etc/hosts || echo "127.0.0.1 $(WORDPRESS_DOMAIN)" | sudo tee -a /etc/hosts
+	@sudo grep -q "$(DOMAIN)" /etc/hosts || echo "127.0.0.1 $(DOMAIN)" | sudo tee -a /etc/hosts
 
 init: secrets hosts build up
 	@echo "Inception project initialized successfully!"
+	info
+
+info:
 	@echo "Access wordpress at: https://$(DOMAIN)"
 	@echo "Access wordpress admin panel at: https://$(DOMAIN)/admin"
 	@echo "Access adminer at: https://$(DOMAIN)/adminer or https://$(DOMAIN)/adminer/index.php"
-	@echo "Access grafana at: https://$(DOMAIN):3000"
+	@echo "		Server: mariadb"
+	@echo "		Username: <db_user>"
+	@echo "		Password: <db_user password>"
+	@echo "		Database: wordpress_db"
+	@echo "Access grafana at: http://$(DOMAIN):3000"
+	@echo "		Reminder: That is a http, not https..."
 
-.PHONY: all build up down restart logs status clean fclean re secrets hosts init
+.PHONY: all build up down restart logs status clean fclean re secrets hosts init info
