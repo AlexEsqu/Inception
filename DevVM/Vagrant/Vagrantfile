@@ -1,0 +1,112 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Use Debian 12 (Bookworm) as the base box - no GUI
+  config.vm.box = "debian/bookworm64"
+
+  # Set the hostname based on your domain setup
+  config.vm.hostname = "inception-dev"
+
+  # Network configuration
+  # Forward SSH port to 4243 as referenced in your install script comments
+  config.vm.network "forwarded_port", guest: 22, host: 4243, id: "ssh"
+
+#   # Forward common development ports
+#   config.vm.network "forwarded_port", guest: 80, host: 8080   # nginx
+#   config.vm.network "forwarded_port", guest: 443, host: 8443  # nginx SSL
+#   config.vm.network "forwarded_port", guest: 3306, host: 3306 # mariadb
+#   config.vm.network "forwarded_port", guest: 9000, host: 9000 # wordpress/php-fpm
+
+  # Private network for better Docker networking
+  config.vm.network "private_network", type: "dhcp"
+
+  # VM resource configuration
+  config.vm.provider "virtualbox" do |vb|
+    # Disable GUI (headless mode)
+    vb.gui = false
+
+    # VM name
+    vb.name = "inception-debian-dev"
+
+    # Memory allocation (8GB for Docker + Grafana + heavy applications)
+    vb.memory = "8192"
+
+    # CPU cores (increased for better performance)
+    vb.cpus = 4
+
+    # Enable nested virtualization for Docker
+    vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
+
+    # Increase video memory (minimal since no GUI)
+    vb.customize ["modifyvm", :id, "--vram", "16"]
+
+    # Performance optimizations for heavy applications
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+    vb.customize ["modifyvm", :id, "--largepages", "on"]
+    vb.customize ["modifyvm", :id, "--vtxvpid", "on"]
+    vb.customize ["modifyvm", :id, "--hwvirtex", "on"]
+
+    # Increase disk I/O performance
+    vb.customize ["storagectl", :id, "--name", "SATA Controller", "--hostiocache", "off"]
+
+    # Enable clipboard and drag & drop (useful for SSH file transfers)
+    vb.customize ["modifyvm", :id, "--clipboard-mode", "bidirectional"]
+    vb.customize ["modifyvm", :id, "--draganddrop", "bidirectional"]
+  end
+
+  # Sync folders
+  # Sync your Inception project to the VM
+  config.vm.synced_folder "../../", "/home/vagrant/Inception",
+    owner: "vagrant", group: "vagrant"
+
+  # Disable default /vagrant sync to avoid conflicts
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  # SSH configuration
+  config.ssh.forward_agent = true
+  config.ssh.forward_x11 = true
+
+  # File provisioning - copy configuration files before running install script
+  config.vm.provision "file", source: "sshd_config", destination: "/home/vagrant/sshd_config"
+  config.vm.provision "file", source: "motd", destination: "/home/vagrant/motd"
+
+  # Shell provisioning - run your install script
+  config.vm.provision "shell", path: "install.sh", privileged: false
+
+  # Additional provisioning for Docker group permissions
+  config.vm.provision "shell", inline: <<-SHELL
+    # Ensure vagrant user is in docker group and restart session
+    sudo usermod -aG docker vagrant
+
+    # Enable and start Docker service
+    sudo systemctl enable docker
+    sudo systemctl start docker
+
+    # Set up domain name for the vagrant user
+    echo "127.0.0.1 mkling.42.fr" | sudo tee -a /etc/hosts
+
+    # Restart SSH service to apply new configuration
+    sudo systemctl restart ssh
+  SHELL
+
+  # Message to display after successful provisioning
+  config.vm.post_up_message = <<-MSG
+    Debian Dev VM is ready!
+
+    SSH Access:
+      ssh -X mkling@localhost -p 4243
+
+    Or use: vagrant ssh
+
+    Inception project is mounted at: /home/vagrant/Inception
+
+    Services available:
+      - Docker & Docker Compose
+      - VS Code (code command)
+      - Firefox
+      - Development tools (make, etc.)
+
+    Domain: mkling.42.fr (mapped to 127.0.0.1)
+  MSG
+end
